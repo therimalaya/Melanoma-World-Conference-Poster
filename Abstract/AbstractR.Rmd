@@ -1,0 +1,169 @@
+---
+title: "Tenth World Congress of Melanoma in Conjuction with 17th EADO Congress"
+subtitle: "April 15-17, 2021"
+author: 
+date: "`r format(Sys.Date(), '%d %B %Y')`"
+fontfamily: mathpazo
+geometry: 'margin=1in'
+fontsize: '12pt'
+toc: false
+linestretch: 1.5
+output: 
+  bookdown::html_document2:
+    number_sections: false
+    theme: yeti
+  officedown::rdocx_document:
+    number_sections: false
+    base_format: bookdown::word_document2
+    reference_docx: 'Final-Submitted/Abstract.docx'
+  bookdown::pdf_document2:
+    number_sections: false
+editor_options: 
+  chunk_output_type: console
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(
+  echo = FALSE,
+  comment = NA, 
+  warning = FALSE,
+  message = FALSE
+)
+library(data.table)
+library(gtsummary)
+
+gtsummary::theme_gtsummary_compact()
+gtsummary::theme_gtsummary_journal('jama')
+```
+
+```{r data}
+data <- readRDS("../../../Documents/Papers/Analysis/data/extended.rds")
+```
+
+```{r table-summary}
+make_table_summary <- function(data) {
+  data[, 
+       .(AgeDiag, AgeGroup, AnatomicSite, MelanomaType, ClinicalStage, 
+         Ulceration, BreslowThickness, BreslowTstage, YearCat)
+  ] %>% tbl_summary(by = YearCat, label = list(
+    AgeGroup ~ "Age group",
+    AgeDiag ~ "Age at diagnosis",
+    BreslowThickness ~ "Tumour thickness",
+    BreslowTstage ~ "T category",
+    AnatomicSite ~ "Anatomic site",
+    MelanomaType ~ "Histopathological subtype",
+    ClinicalStage ~ "Clinical stage"
+  ), missing_text = 'Unspecified') %>% 
+    modify_header(update = all_stat_cols() ~ ifelse(
+      knitr::is_html_output(), 
+      "**{level}**<br>N = {n}", 
+      "**{level}**\nN = {n}"
+    ))
+}
+```
+
+**Title:** Long-term trends in melanoma tumour thickness in Norway
+
+**Authors:** Raju Rimal^1^, Trude E Robsahm^2^, Adele Green^3,4^, Reza Ghiasvand^5^, Corina S Rueegg^5^, Assia Bassarova^6^, Petter Gjersvik^7^, Elisabete Weiderpass^8^, Odd O Aalen^1^, Bjørn Møller^9^, Marit B Veierød^1^
+
+**Affiliations:**
+
+^1^ Oslo Centre for Biostatistics and Epidemiology, Department of Biostatistics, Institute of Basic Medical Sciences, University of Oslo, Oslo, Norway
+
+^2^ Department of Research, Cancer Registry of Norway, Oslo, Norway
+
+^3^ Department of Population Health, QIMR Berghofer Medical Research Institute, Brisbane, Australia
+
+^4^ Cancer Research UK Manchester Institute, University of Manchester, Manchester, United Kingdom
+
+^5^ Oslo Centre for Biostatistics and Epidemiology, Oslo University Hospital, Oslo, Norway
+
+^6^ Department of Pathology, Oslo University Hospital -- Ullevål, Oslo, Norway
+
+^7^ Institute of Clinical Medicine, University of Oslo, Oslo, Norway
+
+^8^ International Agency for Research on Cancer, Lyon, France
+
+^9^ Department of Registration, Cancer Registry of Norway, Oslo, Norway
+
+
+**Categories:** Melanoma
+
+**Topics:** Epidemiology
+
+**Preference:** Poster Presentation
+
+# Background
+
+Norway has the second-highest mortality rate of cutaneous melanoma worldwide and ranks fifth in incidence. Tumour (Breslow) thickness at diagnosis is the primary determinant of the T category in the tumour, nodes, metastasis staging system, and the most important prognostic factor for survival after localized melanoma. This ongoing study investigates long-term trends in tumour thickness, and the corresponding T categories, overall and in important subgroups, in a nationwide case series over a 40-year time period.
+
+# Methods
+
+```{r}
+nobs <- nrow(data)
+```
+
+The population-based Cancer Registry of Norway (CRN) provided all first primary invasive melanoma cases for 1980-2019. Tumour thickness was available from the Norwegian Melanoma Registry (within the CRN) for all cases diagnosed in 2008-2019 and was manually extracted from the paper notifications archived in the CRN for the cases diagnosed in 1980-2007. The dataset consists of `r format(nobs, big.mark = ",")` morphologically verified first primary invasive melanoma cases. Covariates include sex, age, residential geographical region, anatomic site, histopathological subtype, clinical stage, and ulceration.
+
+Descriptive summaries are presented as frequencies (numbers, %) and medians with interquartile ranges (IQR).
+
+# Results
+
+```{r}
+bt <- data[, lapply(list(
+  Median = function(x) median(x, na.rm = TRUE),
+  Q1 = function(x) quantile(x, 0.25, na.rm = TRUE),
+  Q2 = function(x) quantile(x, 0.75, na.rm = TRUE)
+), function(fn) fn(BreslowThickness)), by = .(YearCat, Gender)] %>% 
+  .[, label := paste0(Median, " mm ", "(", paste(Q1, Q2, sep = "--"), ")")] %>% 
+  .[YearCat %in% c('1980-1999', '2008-2019')]
+```
+
+In both men and women, median age at diagnosis increased from 1980-2000 to 2008-2019 (Table \@ref(tab:table1)). Women were diagnosed at a thinner stage than men. In men, median (IQR) tumour thickness decreased from `r bt[Gender=="Male" & YearCat == "1980-1999", label]` in 1980-1999 to `r bt[Gender=="Male" & YearCat == "2008-2019", label]` in 2008-2019, and in women from `r bt[Gender=="Female" & YearCat == "1980-1999", label]` to `r bt[Gender=="Female" & YearCat == "2008-2019", label]`.
+
+Tumour thickness was missing in the pathology reports for more than 25% of the cases until 1990. Reporting of ulceration started in 2000, but with a large proportion of missing values. After the Norwegian Melanoma Registry was established in 2008, the proportions of missing ulceration decreased dramatically.
+
+```{r table1}
+gtsummary::theme_gtsummary_compact()
+gtsummary::theme_gtsummary_journal('jama')
+tbl_male <- make_table_summary(data[Gender == "Male"])
+tbl_female <- make_table_summary(data[Gender == "Female"])
+tbl <- gtsummary::tbl_merge(
+  list(Male = tbl_male, Female = tbl_female), 
+  tab_spanner = c("**Male**", "**Female**")) %>%
+  modify_footnote(update = everything() ~ NA) %>%
+  modify_footnote(update = label ~ "Median (IQR); n (%)") %>% 
+  modify_caption("Characteristics of Norwegian melanoma cases, 1980-2019") %>% 
+  bold_labels()
+tbl$table_body <- tbl$table_body %>% 
+  dplyr::filter(ifelse(variable == "BreslowTstage", label != "Unspecified", TRUE))
+if (knitr::is_html_output()) {
+  tbl %>% as_kable_extra(escape = FALSE) %>% 
+    kableExtra::kable_styling(font_size = 12)
+} else if (knitr::is_latex_output()) {
+  tbl %>% 
+    as_kable_extra(format = "latex", booktabs = TRUE) %>% 
+    kableExtra::kable_paper("striped", full_width = TRUE) %>%
+    kableExtra::column_spec(1, bold = TRUE)
+} else {
+tbl %>% as_flex_table() %>%
+  flextable::theme_vanilla() %>% 
+  flextable::bold(part = "header") %>%
+  flextable::set_table_properties(layout = "autofit") %>% 
+  flextable::fontsize(part = "all", size = 8) %>% 
+  flextable::set_caption(
+    autonum = officer::run_autonum(),
+    caption = "Characteristics of Norwegian melanoma cases, 1980-2019"
+  )
+}
+```
+
+Analysis of incidence rates in relation to tumour
+thickness is in the process, and will be presented at the conference.
+
+# Conclusions
+
+This unique time series of national melanoma
+tumour thickness data will identify trends in tumour thickness, overall and in
+subgroups of the population, as well as identify potential effects of changing exposure
+patterns and earlier detection.

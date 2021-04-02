@@ -1,0 +1,68 @@
+---
+title: "Related Table"
+author: "Raju Rimal"
+date: "3/2/2021"
+output: 
+  officedown::rdocx_document:
+    number_sections: false
+    reference_docx: Abstract.docx
+    tables:
+      style: Table
+      layout: autofit
+      width: 1.0
+      caption:
+        style: Table Caption
+        pre: 'Table '
+        sep: ': '
+editor_options: 
+  chunk_output_type: console
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(
+  echo = FALSE,
+  message = FALSE,
+  warning = FALSE
+)
+library(data.table)
+library(dplyr)
+library(ggplot2)
+library(gtsummary)
+data <- readRDS("../../../Documents/Papers/Analysis/data/extended.rds")
+```
+
+# Summary Table
+
+```{r}
+gtsummary::theme_gtsummary_compact()
+gtsummary::theme_gtsummary_journal('jama')
+tbl_male <- data[
+  Gender == "Male",
+  .(AgeDiag, AgeGroup, AnatomicSite, MelanomaType, ClinicalStage, 
+    Ulceration, BreslowThickness, BreslowTstage, YearCat)
+] %>% tbl_summary(by = YearCat, label = list(
+  AgeGroup ~ "Age group",
+  AgeDiag ~ "Age at diagnosis",
+  BreslowThickness ~ "Tumour thickness",
+  BreslowTstage ~ "T category",
+  AnatomicSite ~ "Anatomic site",
+  MelanomaType ~ "Histopathological subtype",
+  ClinicalStage ~ "Clinical stage"
+), missing_text = 'Unspecified')
+tbl_female <- data[
+  Gender == "Female",
+  .(AgeDiag, AgeGroup, AnatomicSite, MelanomaType, ClinicalStage, 
+    Ulceration, BreslowThickness, BreslowTstage, YearCat)
+] %>% tbl_summary(by = YearCat, label = list(
+  AgeGroup ~ "Age group",
+  AgeDiag ~ "Age at diagnosis",
+  BreslowThickness ~ "Tumour thickness",
+  BreslowTstage ~ "T category",
+  AnatomicSite ~ "Anatomic site",
+  MelanomaType ~ "Histopathological subtype",
+  ClinicalStage ~ "Clinical stage"
+), missing_text = 'Unspecified')
+gtsummary::tbl_merge(list(Male = tbl_male, Female = tbl_female), tab_spanner = c("**Male**", "**Female**")) %>% 
+  bold_labels()
+```
+
