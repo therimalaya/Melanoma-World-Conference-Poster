@@ -91,16 +91,17 @@ library(gt)
 library(kableExtra)
 library(gtsummary)
 library(ggplot2)
+library(stringr)
 
 # gtsummary::theme_gtsummary_compact()
 gtsummary::theme_gtsummary_journal('jama')
 ```
 
 ```{r, include=FALSE}
-source("~/Documents/Papers/Analysis/scripts/00-functions.R")
-data <- readRDS("~/Documents/Papers/Analysis/data/extended.rds")
-data[, Gender := factor(fifelse(Gender == "Male", "Men", "Women"), levels = c("Women", "Men"))] %>% 
-  data.table::setnames("Gender", "Sex")
+# source("~/Documents/Papers/Analysis/scripts/00-functions.R")
+# data <- readRDS("~/Documents/Papers/Analysis/data/extended.rds")
+source("//platon/med-imb-u1/rajur/pc/Dokumenter/Analysis/scripts/00-functions.R")
+data <- readRDS("E:/Melanoma-Postdoc/Data/extended.rds")
 levels(data$AnatomicSite) <- gsub("extremities", "limbs", levels(data$AnatomicSite))
 ```
 
@@ -159,8 +160,8 @@ tbl <- Fn$gt_grouped_summary(
   variables = c(
     AgeDiag = "Age at diagnosis",
     AgeGroup = "Age group",
-    AnatomicSite = "Anatomic site",
-    MelanomaType = "Histopathological subtype"
+    AnatomicSite = "Anatomic site"
+    # MelanomaType = "Histopathological subtype"
   ),
   group = c("Sex", "YearCat")
 ) 
@@ -212,13 +213,14 @@ missing_breslow <- data[, .N, by = .(Sex, YearCat, is.na(BreslowThickness))] %>%
     sep = "")] %>% 
   .[order(Sex, YearCat)]
 
-tbl$table_body[2, grep("^stat", names(tbl$table_body))] <- as.list(purrr::pluck(missing_breslow, 'label'))
+tbl$table_body[2, grep("^stat_\\d", names(tbl$table_body))] <- as.list(purrr::pluck(missing_breslow, 'label'))
 tbl$table_body <- tbl$table_body %>% dplyr::filter(!(row_type == "missing" & variable == "BreslowTstage"))
 tbl$table_body$label[2] <- "Unspecified (% of N)"
-tbl$table_body[4, 1] <- list("T1 (≥1mm)")
-tbl$table_body[5, 1] <- list("T2 (>1-2mm)")
-tbl$table_body[6, 1] <- list("T3 (>2-4mm)")
-tbl$table_body[7, 1] <- list("T4 (>4mm)")
+
+tbl$table_body[4, "label"] <- list("T1 (>=1mm)")
+tbl$table_body[5, "label"] <- list("T2 (>1-2mm)")
+tbl$table_body[6, "label"] <- list("T3 (>2-4mm)")
+tbl$table_body[7, "label"] <- list("T4 (>4mm)")
 
 
 tbl %>% 
