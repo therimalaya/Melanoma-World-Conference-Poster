@@ -98,10 +98,14 @@ gtsummary::theme_gtsummary_journal('jama')
 ```
 
 ```{r, include=FALSE}
-# source("~/Documents/Papers/Analysis/scripts/00-functions.R")
-# data <- readRDS("~/Documents/Papers/Analysis/data/extended.rds")
-source("//platon/med-imb-u1/rajur/pc/Dokumenter/Analysis/scripts/00-functions.R")
-data <- readRDS("E:/Melanoma-Postdoc/Data/extended.rds")
+DATA_PATH <- ifelse(.Platform$OS.type == "windows", "E:/Melanoma-Postdoc/Data", "data")
+BASE_PATH <- ifelse(
+  .Platform$OS.type == "windows", 
+  "////platon/med-imb-u1/rajur/pc/Dokumenter/Analysis", 
+  "~/Documents/Papers/Analysis"
+)
+source(file.path(BASE_PATH, "scripts/00-functions.R"))
+data <- readRDS(file.path(BASE_PATH, "data/extended.rds"))
 levels(data$AnatomicSite) <- gsub("extremities", "limbs", levels(data$AnatomicSite))
 ```
 
@@ -160,8 +164,8 @@ tbl <- Fn$gt_grouped_summary(
   variables = c(
     AgeDiag = "Age at diagnosis",
     AgeGroup = "Age group",
-    AnatomicSite = "Anatomic site"
-    # MelanomaType = "Histopathological subtype"
+    AnatomicSite = "Anatomic site",
+    MelanomaType = "Histopathological subtype"
   ),
   group = c("Sex", "YearCat")
 ) 
